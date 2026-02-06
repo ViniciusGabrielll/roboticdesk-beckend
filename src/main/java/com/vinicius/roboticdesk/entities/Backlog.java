@@ -18,5 +18,6 @@ public class Backlog {
     private Long backlogId;
 
     @ManyToOne
+    @JoinColumn(name = "team_id")
     private Team team;
 }

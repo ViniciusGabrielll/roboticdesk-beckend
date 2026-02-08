@@ -1,8 +1,10 @@
     package com.vinicius.roboticdesk.entities;
 
+    import com.vinicius.roboticdesk.controller.dto.LoginRequest;
     import jakarta.persistence.*;
     import lombok.Getter;
     import lombok.Setter;
+    import org.springframework.security.crypto.password.PasswordEncoder;
 
     import java.util.Set;
     import java.util.UUID;
@@ -48,5 +50,9 @@
             Values(long roleId) {
                 this.roleId = roleId;
             }
+        }
+
+        public boolean isLoginCorrect(LoginRequest loginRequest, PasswordEncoder passwordEncoder) {
+            return passwordEncoder.matches(loginRequest.password(), this.password);
         }
     }

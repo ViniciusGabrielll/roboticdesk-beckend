@@ -1,6 +1,7 @@
 package com.vinicius.roboticdesk.entities;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,4 +18,15 @@ public class Role {
     private Long roleId;
 
     private String name;
+
+    @AllArgsConstructor
+    @Getter
+    public enum Values {
+        ADMIN(1L),
+        SCRUMMASTER(2L),
+        BASIC(3L);
+
+        long roleId;
+
+    }
 }

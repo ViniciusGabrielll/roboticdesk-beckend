@@ -3,6 +3,7 @@ package com.vinicius.roboticdesk.controller;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.vinicius.roboticdesk.controller.dto.LoginRequest;
 import com.vinicius.roboticdesk.controller.dto.LoginResponse;
+import com.vinicius.roboticdesk.entities.Role;
 import com.vinicius.roboticdesk.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @RestController
@@ -39,11 +41,17 @@ public class TokenController {
         var now = Instant.now();
         var expiresIn = 300L;
 
+        var scopes = user.get().getRoles()
+                .stream()
+                .map(Role::getName)
+                .collect(Collectors.joining(" "));
+
         var claims = JwtClaimsSet.builder()
                 .issuer("roboticdesk-backend")
                 .subject(user.get().getUserId().toString())
                 .issuedAt(now)
                 .expiresAt(now.plusSeconds(expiresIn))
+                .claim("scope", scopes)
                 .build();
 
         var jwtValue = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();

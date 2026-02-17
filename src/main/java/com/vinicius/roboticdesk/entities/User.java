@@ -6,6 +6,7 @@
     import lombok.Setter;
     import org.springframework.security.crypto.password.PasswordEncoder;
 
+    import java.util.List;
     import java.util.Set;
     import java.util.UUID;
 
@@ -36,6 +37,14 @@
         @ManyToOne
         @JoinColumn(name = "team_id")
         private Team team;
+
+        @ManyToMany
+        @JoinTable(
+                name = "tb_users_positions",
+                joinColumns = @JoinColumn(name = "user_id"),
+                inverseJoinColumns = @JoinColumn(name = "position_id")
+        )
+        private List<Position> positions;
 
         @Getter
         public enum Values {

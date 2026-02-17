@@ -9,26 +9,24 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "tb_teams")
-public class Team {
+@Table(name = "tb_positions")
+public class Position {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "position_id")
+    private Long positionId;
 
     @Column(unique = true)
-    private String name;
+    private String positionName;
 
-    @OneToMany(mappedBy = "team")
+    @ManyToMany(mappedBy = "positions")
     private List<User> users;
 
-    @OneToMany(mappedBy = "team")
-    private List<Sprint> sprints;
-
-    @OneToMany(mappedBy = "team")
+    @ManyToMany(mappedBy = "positions")
     private List<Item> items;
 
-    @OneToMany(mappedBy = "team")
-    private List<Position> positions;
+    @ManyToOne
+    private Team team;
 
 }

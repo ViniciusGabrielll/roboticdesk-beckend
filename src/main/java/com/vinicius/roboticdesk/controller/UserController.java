@@ -54,10 +54,32 @@ public class UserController {
     }
 
     @GetMapping("/users")
-    @PreAuthorize("hasAuthority('SCOPE_admin')")
+    @PreAuthorize("hasRole('admin')")
     public ResponseEntity<List<User>> listUsers() {
         var users = userRepository.findAll();
         return ResponseEntity.ok(users);
     }
 
+    @PreAuthorize("hasRole('admin')")
+    @Transactional
+    @PostMapping("/admin/user")
+    public ResponseEntity<Void> createUser(@RequestBody CreateUserDto dto) {
+
+        var scrumRole = roleRepository.findByName(Role.Values.SCRUMMASTER.name());
+
+        var userFromDb = userRepository.findByUsername(dto.username());
+
+        if(userFromDb.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+
+        var user = new User();
+        user.setUsername(dto.username());
+        user.setPassword(passwordEncoder.encode(dto.password()));
+        user.setRoles(Set.of(scrumRole));
+
+        userRepository.save(user);
+
+        return ResponseEntity.ok().build();
+    }
 }

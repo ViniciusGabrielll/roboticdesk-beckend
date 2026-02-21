@@ -36,4 +36,5 @@ build/
 **/src/main/resources/app.key
 **/src/main/resources/app.pub
 **/src/main/resources/application.properties
+**/src/main/java/com/vinicius/roboticdesk/config/AdminUserConfig.java
 .env

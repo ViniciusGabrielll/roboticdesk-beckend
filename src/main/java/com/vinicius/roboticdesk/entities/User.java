@@ -1,5 +1,7 @@
     package com.vinicius.roboticdesk.entities;
 
+    import com.fasterxml.jackson.annotation.JsonBackReference;
+    import com.fasterxml.jackson.annotation.JsonIgnore;
     import com.vinicius.roboticdesk.controller.dto.LoginRequest;
     import jakarta.persistence.*;
     import lombok.Getter;
@@ -21,12 +23,15 @@
         @Column(name = "user_id")
         private UUID userId;
 
+        @Column(name = "email", unique = true, nullable = false)
+        private String email;
+
         @Column(unique = true)
         private String username;
 
         private String password;
 
-        @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+        @ManyToMany(fetch = FetchType.EAGER)
         @JoinTable(
                 name = "tb_users_roles",
                 joinColumns = @JoinColumn(name = "user_id"),

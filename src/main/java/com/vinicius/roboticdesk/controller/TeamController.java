@@ -3,8 +3,10 @@ package com.vinicius.roboticdesk.controller;
 import com.vinicius.roboticdesk.controller.dto.CreateTeamDto;
 import com.vinicius.roboticdesk.entities.Role;
 import com.vinicius.roboticdesk.entities.Team;
+import com.vinicius.roboticdesk.entities.TeamInvite;
 import com.vinicius.roboticdesk.entities.User;
 import com.vinicius.roboticdesk.repository.RoleRepository;
+import com.vinicius.roboticdesk.repository.TeamInviteRepository;
 import com.vinicius.roboticdesk.repository.TeamRepository;
 import com.vinicius.roboticdesk.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -17,6 +19,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -33,6 +36,8 @@ public class TeamController {
     private final RoleRepository roleRepository;
 
     private final UserRepository userRepository;
+
+    private final TeamInviteRepository teamInviteRepository;
 
     @PreAuthorize("hasRole('admin') or hasRole('scrummaster')")
     @Transactional
@@ -97,6 +102,104 @@ public class TeamController {
 
         teamRepository.delete(team);
 
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @Transactional
+    @PostMapping("/{teamId}/invites")
+    public ResponseEntity<String> createInvite(
+            @PathVariable Long teamId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Usuário não encontrado"
+                ));
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Time não encontrado"
+                ));
+
+        if (user.getTeam() == null || !user.getTeam().getId().equals(team.getId())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Você não pertence a esse time"
+            );
+        }
+
+        TeamInvite invite = new TeamInvite();
+        invite.setToken(UUID.randomUUID().toString());
+        invite.setTeam(team);
+        invite.setExpiresAt(LocalDateTime.now().plusDays(7));
+        invite.setMaxUses(20);
+        invite.setUsedCount(0);
+        invite.setActive(true);
+
+        teamInviteRepository.save(invite);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(invite.getToken());
+    }
+
+    @Transactional
+    @PostMapping("/invites/{token}/accept")
+    public ResponseEntity<Void> acceptInvite(
+            @PathVariable String token,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Usuário não encontrado"
+                ));
+
+
+        if (user.getTeam() != null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Usuário já pertence a um time"
+            );
+        }
+
+        TeamInvite invite = teamInviteRepository.findByToken(token)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Convite inválido"
+                ));
+
+        if (!invite.isActive()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Convite desativado"
+            );
+        }
+
+        if (invite.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Convite expirado"
+            );
+        }
+
+        if (invite.getUsedCount() >= invite.getMaxUses()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Convite já utilizado"
+            );
+        }
+
+        user.setTeam(invite.getTeam());
+        userRepository.save(user);
+
+        invite.setUsedCount(invite.getUsedCount() + 1);
+
+        if (invite.getUsedCount() >= invite.getMaxUses()) {
+            invite.setActive(false);
+        }
+
+        teamInviteRepository.save(invite);
 
         return ResponseEntity.noContent().build();
     }

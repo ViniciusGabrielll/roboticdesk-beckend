@@ -17,8 +17,8 @@ public class Item {
     @Column(name = "item_id")
     private Long itemId;
 
-    @Column(name = "titulo")
-    private String titulo;
+    @Column(name = "title")
+    private String title;
 
     @Column(name = "priority")
     private Integer priority;
@@ -26,8 +26,8 @@ public class Item {
     @ManyToMany
     @JoinTable(
             name = "tb_item_positions",
-            joinColumns = @JoinColumn(name = "item_id"),
-            inverseJoinColumns = @JoinColumn(name = "position_id")
+            joinColumns = @JoinColumn(name = "item_id", nullable = true),
+            inverseJoinColumns = @JoinColumn(name = "position_id", nullable = true)
     )
     private List<Position> positions;
 

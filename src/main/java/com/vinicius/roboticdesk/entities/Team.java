@@ -1,5 +1,6 @@
 package com.vinicius.roboticdesk.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -21,12 +22,14 @@ public class Team {
     private String name;
 
     @OneToMany(mappedBy = "team")
+    @JsonIgnore
     private List<User> users;
 
     @OneToMany(mappedBy = "team")
     private List<Sprint> sprints;
 
     @OneToMany(mappedBy = "team")
+    @JsonIgnore
     private List<Item> items;
 
     @OneToMany(mappedBy = "team")

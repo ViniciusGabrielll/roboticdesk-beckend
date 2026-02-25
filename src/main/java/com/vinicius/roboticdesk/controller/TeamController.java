@@ -204,4 +204,29 @@ public class TeamController {
         return ResponseEntity.noContent().build();
     }
 
+    @Transactional
+    @PostMapping("/leave")
+    public ResponseEntity<Void> leaveTeam(
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Usuário não encontrado"
+                ));
+
+        if (user.getTeam() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Usuário não está em nenhum time"
+            );
+        }
+
+        user.setTeam(null);
+
+        userRepository.save(user);
+        return ResponseEntity.noContent().build();
+    }
+
 }

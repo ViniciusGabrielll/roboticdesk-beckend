@@ -5,10 +5,7 @@ import com.vinicius.roboticdesk.entities.Role;
 import com.vinicius.roboticdesk.entities.Team;
 import com.vinicius.roboticdesk.entities.TeamInvite;
 import com.vinicius.roboticdesk.entities.User;
-import com.vinicius.roboticdesk.repository.RoleRepository;
-import com.vinicius.roboticdesk.repository.TeamInviteRepository;
-import com.vinicius.roboticdesk.repository.TeamRepository;
-import com.vinicius.roboticdesk.repository.UserRepository;
+import com.vinicius.roboticdesk.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -38,6 +35,8 @@ public class TeamController {
     private final UserRepository userRepository;
 
     private final TeamInviteRepository teamInviteRepository;
+
+    private final ItemRepository itemRepository;
 
     @PreAuthorize("hasRole('admin') or hasRole('scrummaster')")
     @Transactional
@@ -100,6 +99,8 @@ public class TeamController {
             user.setTeam(null);
         }
 
+        itemRepository.deleteByTeam(team);
+        teamInviteRepository.deleteByTeam(team);
         teamRepository.delete(team);
 
 
@@ -220,6 +221,13 @@ public class TeamController {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Usuário não está em nenhum time"
+            );
+        }
+
+        if (user.getTeam().getUsers().size() <= 1) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "O ultimo usuário deve deletar o time"
             );
         }
 

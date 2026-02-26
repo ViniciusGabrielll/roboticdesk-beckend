@@ -108,6 +108,34 @@ public class TeamController {
     }
 
     @Transactional
+    @GetMapping("/{teamId}/users")
+    public ResponseEntity<List<User>> members(
+            @PathVariable Long teamId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        User userRequest = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Seu usuário não foi encontrado"
+                ));
+
+        if(!userRequest.getTeam().getId().equals(teamId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Você não pertence a esse time"
+            );
+        }
+
+        var team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Time não encontrado"
+                ));
+
+        return ResponseEntity.ok(team.getUsers());
+    }
+
+    @Transactional
     @PostMapping("/{teamId}/invites")
     public ResponseEntity<String> createInvite(
             @PathVariable Long teamId,

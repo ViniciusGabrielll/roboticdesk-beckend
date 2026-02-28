@@ -1,5 +1,6 @@
 package com.vinicius.roboticdesk.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,12 +22,15 @@ public class Position {
     private String positionName;
 
     @ManyToMany(mappedBy = "positions")
+    @JsonIgnore
     private List<User> users;
 
     @ManyToMany(mappedBy = "positions")
+    @JsonIgnore
     private List<Item> items;
 
     @ManyToOne
+    @JsonIgnore
     private Team team;
 
 }

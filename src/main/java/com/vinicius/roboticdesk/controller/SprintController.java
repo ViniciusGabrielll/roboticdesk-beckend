@@ -49,6 +49,7 @@ public class SprintController {
         if(!dto.fromTime().isBefore(dto.toTime())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A data de início é maior do que a de final");
         }
+        sprint.setTitle(dto.title());
         sprint.setFromTime(dto.fromTime());
         sprint.setToTime(dto.toTime());
 

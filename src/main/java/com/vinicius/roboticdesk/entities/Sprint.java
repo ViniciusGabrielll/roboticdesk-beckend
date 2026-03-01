@@ -23,6 +23,9 @@ public class Sprint {
     @Column(name = "sprint_id")
     private Long sprintId;
 
+    @Column(name = "title")
+    private String title;
+
     @ManyToOne
     @JoinColumn(name = "team_id")
     @JsonIgnore
@@ -32,6 +35,9 @@ public class Sprint {
     @JsonIgnore
     private List<Item> items;
 
+    @Column(name = "from_time")
     private LocalDate fromTime;
+
+    @Column(name = "to_time")
     private LocalDate toTime;
 }

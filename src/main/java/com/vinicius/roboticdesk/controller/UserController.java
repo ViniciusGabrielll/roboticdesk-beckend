@@ -81,7 +81,8 @@ public class UserController {
                 user.getUsername(),
                 user.getEmail(),
                 user.getTeam() != null ? user.getTeam().getId() : null,
-                user.getTeam() != null ? user.getTeam().getName() : null
+                user.getTeam() != null ? user.getTeam().getName() : null,
+                user.getRoles()
         );
     }
 

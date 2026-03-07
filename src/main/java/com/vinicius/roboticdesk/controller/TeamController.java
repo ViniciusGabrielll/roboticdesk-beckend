@@ -234,7 +234,52 @@ public class TeamController {
     }
 
     @Transactional
-    @PostMapping("/leave")
+    @PreAuthorize("hasRole('admin') or hasRole('scrummaster')")
+    @DeleteMapping("/{teamId}/users/{memberId}")
+    public ResponseEntity<Void> kickOutMember(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long teamId,
+            @PathVariable UUID memberId
+    ) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Usuário não encontrado"
+                ));
+
+        if (user.getTeam() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Usuário não está em nenhum time"
+            );
+        }
+
+        if (!user.getTeam().getId().equals(teamId)) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Você não pode remover membros de outro time"
+            );
+        }
+
+        User member = userRepository.findById(memberId).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED, "Membro não encontrado"
+        ));
+
+        if(!user.getTeam().getUsers().contains(member)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Esse usuário não pertence ao seu time"
+            );
+        }
+
+        member.setTeam(null);
+        userRepository.save(member);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Transactional
+    @PostMapping("/teams/{teamId}/")
     public ResponseEntity<Void> leaveTeam(
             @AuthenticationPrincipal Jwt jwt
     ) {

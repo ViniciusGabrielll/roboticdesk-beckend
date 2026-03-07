@@ -1,5 +1,6 @@
 package com.vinicius.roboticdesk.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,6 +24,9 @@ public class Item {
     @Column(name = "priority")
     private Integer priority;
 
+    @Enumerated(EnumType.STRING)
+    private ItemStatus status;
+
     @ManyToMany
     @JoinTable(
             name = "tb_item_positions",
@@ -33,11 +37,13 @@ public class Item {
 
     @ManyToOne
     @JoinColumn(name = "team_id")
+    @JsonIgnore
     private Team team;
 
 
     @ManyToOne
     @JoinColumn(name = "sprint_id", nullable = true)
+    @JsonIgnore
     private Sprint sprint;
 
 }

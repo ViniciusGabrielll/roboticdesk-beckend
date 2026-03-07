@@ -2,10 +2,7 @@ package com.vinicius.roboticdesk.controller;
 
 import com.vinicius.roboticdesk.controller.dto.CreateItemDto;
 import com.vinicius.roboticdesk.controller.dto.CreateSprintDto;
-import com.vinicius.roboticdesk.entities.Item;
-import com.vinicius.roboticdesk.entities.Sprint;
-import com.vinicius.roboticdesk.entities.Team;
-import com.vinicius.roboticdesk.entities.User;
+import com.vinicius.roboticdesk.entities.*;
 import com.vinicius.roboticdesk.repository.ItemRepository;
 import com.vinicius.roboticdesk.repository.SprintRepository;
 import com.vinicius.roboticdesk.repository.UserRepository;
@@ -30,6 +27,8 @@ public class SprintController {
     private final SprintRepository sprintRepository;
 
     private final UserRepository userRepository;
+
+    private final ItemRepository itemRepository;
 
     @Transactional
     @PostMapping
@@ -72,6 +71,69 @@ public class SprintController {
         Team team = user.getTeam();
 
         return ResponseEntity.ok(team.getSprints());
+    }
+
+    @Transactional
+    @DeleteMapping("/{sprintId}")
+    public ResponseEntity<Void> deleteSprint(@PathVariable Long sprintId, @AuthenticationPrincipal Jwt
+            jwt) {
+
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Usuário não encontrado"
+                ));
+
+        Sprint sprint = sprintRepository.findById(sprintId)
+                .orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Sprint não encontrado"
+        ));
+
+        if(!user.getTeam().getSprints().contains(sprint)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Essa sprint não pertence ao seu time.");
+        }
+
+        for (Item item : sprint.getItems()) {
+            item.setSprint(null);
+        }
+        sprint.getItems().clear();
+
+        sprintRepository.delete(sprint);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @Transactional
+    @PostMapping("/{sprintId}/items/{itemId}")
+    public ResponseEntity<Void> assignItemSprint(@PathVariable Long sprintId, @PathVariable Long itemId, @AuthenticationPrincipal Jwt
+            jwt) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Usuário não encontrado"
+                ));
+
+        Sprint sprint = sprintRepository.findById(sprintId).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Sprint não encontrado"));
+
+        Item item = itemRepository.findById(itemId).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Item não encontrado"));
+
+
+        if(!user.getTeam().getSprints().contains(sprint)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Essa sprint não pertence ao seu time.");
+        }
+        if(!user.getTeam().getItems().contains(item)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Esse item não pertence ao seu time.");
+        }
+
+        sprint.getItems().add(item);
+        item.setSprint(sprint);
+        item.setStatus(ItemStatus.TODO);
+
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 
 }

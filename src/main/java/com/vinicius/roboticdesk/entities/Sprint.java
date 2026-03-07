@@ -32,7 +32,6 @@ public class Sprint {
     private Team team;
 
     @OneToMany(mappedBy = "sprint")
-    @JsonIgnore
     private List<Item> items;
 
     @Column(name = "from_time")

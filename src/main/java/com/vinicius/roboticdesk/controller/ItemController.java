@@ -2,6 +2,7 @@ package com.vinicius.roboticdesk.controller;
 
 import com.vinicius.roboticdesk.controller.dto.CreateItemDto;
 import com.vinicius.roboticdesk.entities.Item;
+import com.vinicius.roboticdesk.entities.ItemStatus;
 import com.vinicius.roboticdesk.entities.Team;
 import com.vinicius.roboticdesk.entities.User;
 import com.vinicius.roboticdesk.repository.ItemRepository;
@@ -42,6 +43,7 @@ public class ItemController {
         item.setTitle(dto.title());
         item.setTeam(user.getTeam());
         item.setPriority(dto.priority());
+        item.setStatus(ItemStatus.TODO);
         itemRepository.save(item);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
@@ -67,5 +69,43 @@ public class ItemController {
         var items = team.getItems();
 
         return ResponseEntity.ok(items);
+    }
+
+    @Transactional
+    @PatchMapping("{itemId}/status/{statusName}")
+    public ResponseEntity<Void> changeStatus(@AuthenticationPrincipal Jwt
+                                                        jwt, @PathVariable Long itemId,@PathVariable String statusName) {
+        UUID userId = UUID.fromString(jwt.getSubject());
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, "Usuário não encontrado"
+                ));
+
+        if(user.getTeam() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Usuário não pertence a um time");
+        }
+
+        var team = user.getTeam();
+
+        Item item = itemRepository.findById(itemId).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Item não encontrado"
+        ));
+        if(!item.getTeam().getId().equals(team.getId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Você não pertence ao time do item");
+        }
+
+        ItemStatus status;
+        try {
+            status = ItemStatus.valueOf(statusName);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status inexistente!");
+        }
+
+        item.setStatus(status);
+        itemRepository.save(item);
+
+
+        return ResponseEntity.ok().build();
     }
 }
